@@ -1,17 +1,30 @@
+@extends('layouts.app')
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $pageTitle ?? 'Campus Crisis Management' }}</title>
-    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
-</head>
-<body style="padding:30px">
-    <main class="panel" style="max-width:900px;margin:auto">
+@section('title', $pageTitle ?? 'Campus Crisis Management')
+
+@section('heading', $pageTitle ?? 'Campus Crisis Management')
+
+@section('content')
+
+<div class="page-heading">
+    <div>
         <h1>{{ $pageTitle ?? 'Campus Crisis Management' }}</h1>
-        <p>This module is ready for its form, table and database functionality.</p>
-        <a href="{{ url('/dashboard') }}">← Back to Dashboard</a>
-    </main>
-</body>
-</html>
+        <p class="muted">
+            Manage and monitor this CampusGuard module.
+        </p>
+    </div>
+</div><div class="card">
+    <div style="padding:24px;">
+        <h2>{{ $pageTitle ?? 'Campus Crisis Management' }}</h2>    <p class="muted" style="margin-top:12px;">
+        This module page is connected to the main dashboard.
+        Its form, table and database functionality can be added here.
+    </p>
+
+    <div style="margin-top:24px;">
+        <a href="{{ route('dashboard') }}" class="btn btn-primary">
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+
+</div>@endsection

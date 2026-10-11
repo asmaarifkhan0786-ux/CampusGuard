@@ -16,7 +16,12 @@ class EmergencyReportController extends Controller
             ->latest()
             ->paginate(10);
 
-        return view('emergency-reports.index', compact('reports'));
+        $totalIncidents = EmergencyReport::count();
+
+        return view('emergency-reports.index', compact(
+            'reports',
+            'totalIncidents'
+        ));
     }
 
     public function create()
@@ -30,6 +35,11 @@ class EmergencyReportController extends Controller
 
     public function store(Request $request)
     {
+        if (!Auth::check()) {
+            return redirect()->route('login')
+                ->with('error', 'Please log in before submitting a report.');
+        }
+
         $data = $request->validate([
             'crisis_category_id' => [
                 'nullable',
@@ -47,23 +57,23 @@ class EmergencyReportController extends Controller
             'contact_number' => ['nullable', 'string', 'max:30'],
         ]);
 
-        if (! Auth::check()) {
-            return redirect()->route('login')
-                ->with('error', 'Please log in before submitting a report.');
-        }
-
         $data['user_id'] = Auth::id();
         $data['status'] = 'pending';
 
         EmergencyReport::create($data);
 
-        return redirect()->route('emergency-reports.index')
+        return redirect()
+            ->route('emergency-reports.index')
             ->with('success', 'Emergency report submitted successfully.');
     }
 
     public function show(EmergencyReport $emergencyReport)
     {
-        $emergencyReport->load(['user', 'category', 'assignments.team']);
+        $emergencyReport->load([
+            'user',
+            'category',
+            'assignments.team',
+        ]);
 
         return view('emergency-reports.show', compact('emergencyReport'));
     }
@@ -80,8 +90,10 @@ class EmergencyReportController extends Controller
         ));
     }
 
-    public function update(Request $request, EmergencyReport $emergencyReport)
-    {
+    public function update(
+        Request $request,
+        EmergencyReport $emergencyReport
+    ) {
         $data = $request->validate([
             'crisis_category_id' => [
                 'nullable',
@@ -99,8 +111,12 @@ class EmergencyReportController extends Controller
             'status' => [
                 'required',
                 Rule::in([
-                    'pending', 'under_review', 'assigned',
-                    'in_progress', 'resolved', 'rejected',
+                    'pending',
+                    'under_review',
+                    'assigned',
+                    'in_progress',
+                    'resolved',
+                    'rejected',
                 ]),
             ],
             'contact_number' => ['nullable', 'string', 'max:30'],
@@ -112,7 +128,8 @@ class EmergencyReportController extends Controller
 
         $emergencyReport->update($data);
 
-        return redirect()->route('emergency-reports.index')
+        return redirect()
+            ->route('emergency-reports.index')
             ->with('success', 'Emergency report updated successfully.');
     }
 
@@ -120,7 +137,8 @@ class EmergencyReportController extends Controller
     {
         $emergencyReport->delete();
 
-        return redirect()->route('emergency-reports.index')
+        return redirect()
+            ->route('emergency-reports.index')
             ->with('success', 'Emergency report deleted successfully.');
     }
 }

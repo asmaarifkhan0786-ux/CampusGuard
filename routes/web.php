@@ -1,8 +1,6 @@
-
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
@@ -11,30 +9,21 @@ use App\Http\Controllers\CrisisCategoryController;
 use App\Http\Controllers\ResponseTeamController;
 use App\Http\Controllers\IncidentAssignmentController;
 use App\Http\Controllers\EmergencyAlertController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ResourcesEquipmentController;
 
 /*
 |--------------------------------------------------------------------------
-| Public Home Page
+| Public Routes
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', [HomeController::class, 'index'])
-    ->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-/*
-|--------------------------------------------------------------------------
-| Authentication
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/login', [AuthController::class, 'showLogin'])
-    ->name('login');
-
-Route::post('/login', [AuthController::class, 'login'])
-    ->name('login.submit');
-
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->name('logout');
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/student-login', [AuthController::class, 'studentLogin'])
     ->name('student.login');
@@ -48,151 +37,181 @@ Route::get('/register', [AuthController::class, 'showRegister'])
 Route::post('/register', [AuthController::class, 'register'])
     ->name('register.submit');
 
-Route::get('/forgot-password', [
-    AuthController::class,
-    'showForgotPassword'
-])->name('password.request');
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])
+    ->name('password.request');
 
-Route::post('/forgot-password', [
-    AuthController::class,
-    'forgotPassword'
-])->name('password.email');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+    ->name('password.email');
+
 
 /*
 |--------------------------------------------------------------------------
-| Dashboard
+| Authenticated Routes
 |--------------------------------------------------------------------------
 */
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth')
-    ->name('dashboard');
+Route::middleware('auth')->group(function () {
 
-/*
-|--------------------------------------------------------------------------
-| Report Incident and All Incidents
-|--------------------------------------------------------------------------
-*/
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
-// All Incidents: incidents ki list
-Route::get('/incidents', [
-    EmergencyReportController::class,
-    'index'
-])->name('incidents.index');
+    // Emergency Reports
+    Route::resource('emergency-reports', EmergencyReportController::class);
 
-// Report Incident: naya report form
-Route::get('/incidents/create', [
-    EmergencyReportController::class,
-    'create'
-])->name('incidents.create');
+    // Crisis Categories
+    Route::resource('crisis-categories', CrisisCategoryController::class);
 
-// Submit new report
-Route::post('/incidents', [
-    EmergencyReportController::class,
-    'store'
-])->name('incidents.store');
+    // Response Teams
+    Route::resource('response-teams', ResponseTeamController::class);
 
-// View a single incident
-Route::get('/incidents/{emergencyReport}', [
-    EmergencyReportController::class,
-    'show'
-])->whereNumber('emergencyReport')
-  ->name('incidents.show');
+    // Incident Assignments
+    Route::resource('incident-assignments', IncidentAssignmentController::class);
 
-// Edit incident
-Route::get('/incidents/{emergencyReport}/edit', [
-    EmergencyReportController::class,
-    'edit'
-])->whereNumber('emergencyReport')
-  ->name('incidents.edit');
+    // Emergency Alerts
+    Route::resource('emergency-alerts', EmergencyAlertController::class);
 
-// Update incident
-Route::put('/incidents/{emergencyReport}', [
-    EmergencyReportController::class,
-    'update'
-])->whereNumber('emergencyReport')
-  ->name('incidents.update');
 
-// Delete incident
-Route::delete('/incidents/{emergencyReport}', [
-    EmergencyReportController::class,
-    'destroy'
-])->whereNumber('emergencyReport')
-  ->name('incidents.destroy');
+    /*
+    |--------------------------------------------------------------------------
+    | Campus Locations
+    |--------------------------------------------------------------------------
+    */
 
-/*
-|--------------------------------------------------------------------------
-| Emergency Reports Resource
-|--------------------------------------------------------------------------
-|
-| Existing emergency-reports URLs bhi available rahenge.
-|
-*/
+    Route::view('/campus-locations', 'modules.campus-locations')
+        ->name('campus.locations');
 
-Route::resource('emergency-reports', EmergencyReportController::class);
 
-/*
-|--------------------------------------------------------------------------
-| Crisis Categories
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | Resources & Equipment
+    |--------------------------------------------------------------------------
+    */
 
-Route::resource('crisis-categories', CrisisCategoryController::class);
+    Route::get('/resources-equipment', [
+        ResourcesEquipmentController::class,
+        'index'
+    ])->name('resources-equipment.index');
 
-/*
-|--------------------------------------------------------------------------
-| Response Teams
-|--------------------------------------------------------------------------
-*/
+    Route::post('/resources-equipment', [
+        ResourcesEquipmentController::class,
+        'store'
+    ])->name('resources-equipment.store');
 
-Route::resource('response-teams', ResponseTeamController::class);
 
-/*
-|--------------------------------------------------------------------------
-| Incident Assignments
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | Users & Roles
+    |--------------------------------------------------------------------------
+    */
 
-Route::resource('incident-assignments', IncidentAssignmentController::class);
+    Route::view('/users-roles', 'modules.users-roles')
+        ->name('users.roles');
 
-/*
-|--------------------------------------------------------------------------
-| Emergency Alerts
-|--------------------------------------------------------------------------
-*/
 
-Route::resource('emergency-alerts', EmergencyAlertController::class);
+    /*
+    |--------------------------------------------------------------------------
+    | Reports & Analytics
+    |--------------------------------------------------------------------------
+    */
 
-/*
-|--------------------------------------------------------------------------
-| Map Navigation
-|--------------------------------------------------------------------------
-*/
+    Route::get('/reports-analytics', function () {
 
-Route::view('/map-navigation', 'map-navigation')
-    ->name('map.navigation');
+        $total = \App\Models\EmergencyReport::count();
 
-/*
-|--------------------------------------------------------------------------
-| Other CampusGuard Pages
-|--------------------------------------------------------------------------
-*/
+        $resolved = \App\Models\EmergencyReport::where(
+            'status',
+            'resolved'
+        )->count();
 
-$pages = [
-    'emergency-teams'       => 'Emergency Teams',
-    'campus-locations'      => 'Campus Locations',
-    'resources-equipment'   => 'Resources & Equipment',
-    'users-roles'           => 'Users & Roles',
-    'reports-analytics'     => 'Reports & Analytics',
-    'audit-logs'            => 'Audit Logs',
-    'search-filter'         => 'Search & Filter',
-    'settings'              => 'Settings',
-    'profile'               => 'My Profile',
-    'quick-actions'         => 'Quick Actions',
-];
+        $active = \App\Models\EmergencyReport::where(
+            'status',
+            '!=',
+            'resolved'
+        )->count();
 
-foreach ($pages as $url => $title) {
-    Route::view('/' . $url, 'placeholder', [
-        'pageTitle' => $title,
-    ])->name(str_replace('-', '.', $url));
-}
+        return view(
+            'modules.reports-analytics',
+            compact('total', 'resolved', 'active')
+        );
+
+    })->name('reports.analytics');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Audit Logs
+    |--------------------------------------------------------------------------
+    */
+
+    Route::view('/audit-logs', 'modules.audit-logs')
+        ->name('audit.logs');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Search & Filter
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/search-filter', function () {
+
+        $q = request('q');
+
+        $reports = \App\Models\EmergencyReport::query()
+            ->when($q, function ($query, $q) {
+
+                $query->where(function ($sub) use ($q) {
+
+                    $sub->where('title', 'like', "%{$q}%")
+                        ->orWhere('description', 'like', "%{$q}%")
+                        ->orWhere('location', 'like', "%{$q}%");
+
+                });
+
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view(
+            'modules.search-filter',
+            compact('reports', 'q')
+        );
+
+    })->name('search.filter');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Map Navigation
+    |--------------------------------------------------------------------------
+    */
+
+    Route::view('/map-navigation', 'map-navigation')
+        ->name('map.navigation');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Profile
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::put('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Settings
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/settings', [SettingsController::class, 'index'])
+        ->name('settings');
+
+});
