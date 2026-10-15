@@ -1,9 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\StudentLoginController;
 use App\Http\Controllers\EmergencyReportController;
 use App\Http\Controllers\CrisisCategoryController;
 use App\Http\Controllers\ResponseTeamController;
@@ -13,30 +15,52 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ResourcesEquipmentController;
 
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', [HomeController::class, 'index'])
+    ->name('home');
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::get('/student-login', [AuthController::class, 'studentLogin'])
+// Normal Login
+Route::get('/login', [AuthController::class, 'showLogin'])
+    ->name('login');
+
+Route::post('/login', [AuthController::class, 'login'])
+    ->name('login.submit');
+
+
+// Logout
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->name('logout');
+
+
+// Student Login
+Route::get('/student-login', [StudentLoginController::class, 'showLogin'])
     ->name('student.login');
 
+Route::post('/student-login', [StudentLoginController::class, 'login'])
+    ->name('student.login.submit');
+
+
+// Admin Login
 Route::get('/admin-login', [AuthController::class, 'adminLogin'])
     ->name('admin.login');
 
+
+// Register
 Route::get('/register', [AuthController::class, 'showRegister'])
     ->name('register');
 
 Route::post('/register', [AuthController::class, 'register'])
     ->name('register.submit');
 
+
+// Forgot Password
 Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])
     ->name('password.request');
 
@@ -44,32 +68,155 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
     ->name('password.email');
 
 
+
 /*
 |--------------------------------------------------------------------------
-| Authenticated Routes
+| Student Portal
+|--------------------------------------------------------------------------
+| Student can:
+| 1. Open emergency report form
+| 2. Submit emergency report
+|
+| Student does NOT get access to admin dashboard/modules.
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth'])->group(function () {
 
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+    Route::get('/emergency-reports/create', [
+        EmergencyReportController::class,
+        'create'
+    ])->name('emergency-reports.create');
 
-    // Emergency Reports
-    Route::resource('emergency-reports', EmergencyReportController::class);
 
-    // Crisis Categories
-    Route::resource('crisis-categories', CrisisCategoryController::class);
+    Route::post('/emergency-reports', [
+        EmergencyReportController::class,
+        'store'
+    ])->name('emergency-reports.store');
 
-    // Response Teams
-    Route::resource('response-teams', ResponseTeamController::class);
+});
 
-    // Incident Assignments
-    Route::resource('incident-assignments', IncidentAssignmentController::class);
 
-    // Emergency Alerts
-    Route::resource('emergency-alerts', EmergencyAlertController::class);
+
+/*
+|--------------------------------------------------------------------------
+| Admin Portal
+|--------------------------------------------------------------------------
+| Only admin users can access these routes.
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/dashboard', [
+        DashboardController::class,
+        'index'
+    ])->name('dashboard');
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Emergency Reports / All Incidents
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/emergency-reports', [
+        EmergencyReportController::class,
+        'index'
+    ])->name('emergency-reports.index');
+
+
+    Route::get('/emergency-reports/{emergencyReport}', [
+        EmergencyReportController::class,
+        'show'
+    ])
+    ->whereNumber('emergencyReport')
+    ->name('emergency-reports.show');
+
+
+    Route::get('/emergency-reports/{emergencyReport}/edit', [
+        EmergencyReportController::class,
+        'edit'
+    ])
+    ->whereNumber('emergencyReport')
+    ->name('emergency-reports.edit');
+
+
+    Route::put('/emergency-reports/{emergencyReport}', [
+        EmergencyReportController::class,
+        'update'
+    ])
+    ->whereNumber('emergencyReport')
+    ->name('emergency-reports.update');
+
+
+    Route::delete('/emergency-reports/{emergencyReport}', [
+        EmergencyReportController::class,
+        'destroy'
+    ])
+    ->whereNumber('emergencyReport')
+    ->name('emergency-reports.destroy');
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Crisis Categories
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource(
+        'crisis-categories',
+        CrisisCategoryController::class
+    );
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Emergency Teams
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource(
+        'response-teams',
+        ResponseTeamController::class
+    );
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Team Assignments
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource(
+        'incident-assignments',
+        IncidentAssignmentController::class
+    );
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Emergency Alerts
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource(
+        'emergency-alerts',
+        EmergencyAlertController::class
+    );
+
 
 
     /*
@@ -78,8 +225,11 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::view('/campus-locations', 'modules.campus-locations')
-        ->name('campus.locations');
+    Route::view(
+        '/campus-locations',
+        'modules.campus-locations'
+    )->name('campus.locations');
+
 
 
     /*
@@ -93,10 +243,12 @@ Route::middleware('auth')->group(function () {
         'index'
     ])->name('resources-equipment.index');
 
+
     Route::post('/resources-equipment', [
         ResourcesEquipmentController::class,
         'store'
     ])->name('resources-equipment.store');
+
 
 
     /*
@@ -105,8 +257,11 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::view('/users-roles', 'modules.users-roles')
-        ->name('users.roles');
+    Route::view(
+        '/users-roles',
+        'modules.users-roles'
+    )->name('users.roles');
+
 
 
     /*
@@ -132,10 +287,15 @@ Route::middleware('auth')->group(function () {
 
         return view(
             'modules.reports-analytics',
-            compact('total', 'resolved', 'active')
+            compact(
+                'total',
+                'resolved',
+                'active'
+            )
         );
 
     })->name('reports.analytics');
+
 
 
     /*
@@ -144,8 +304,11 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::view('/audit-logs', 'modules.audit-logs')
-        ->name('audit.logs');
+    Route::view(
+        '/audit-logs',
+        'modules.audit-logs'
+    )->name('audit.logs');
+
 
 
     /*
@@ -163,9 +326,23 @@ Route::middleware('auth')->group(function () {
 
                 $query->where(function ($sub) use ($q) {
 
-                    $sub->where('title', 'like', "%{$q}%")
-                        ->orWhere('description', 'like', "%{$q}%")
-                        ->orWhere('location', 'like', "%{$q}%");
+                    $sub->where(
+                        'title',
+                        'like',
+                        "%{$q}%"
+                    )
+
+                    ->orWhere(
+                        'description',
+                        'like',
+                        "%{$q}%"
+                    )
+
+                    ->orWhere(
+                        'location',
+                        'like',
+                        "%{$q}%"
+                    );
 
                 });
 
@@ -176,20 +353,27 @@ Route::middleware('auth')->group(function () {
 
         return view(
             'modules.search-filter',
-            compact('reports', 'q')
+            compact(
+                'reports',
+                'q'
+            )
         );
 
     })->name('search.filter');
 
 
+
     /*
     |--------------------------------------------------------------------------
-    | Map Navigation
+    | Map & Navigation
     |--------------------------------------------------------------------------
     */
 
-    Route::view('/map-navigation', 'map-navigation')
-        ->name('map.navigation');
+    Route::view(
+        '/map-navigation',
+        'map-navigation'
+    )->name('map.navigation');
+
 
 
     /*
@@ -198,11 +382,17 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/profile', [ProfileController::class, 'edit'])
-        ->name('profile.edit');
+    Route::get('/profile', [
+        ProfileController::class,
+        'edit'
+    ])->name('profile.edit');
 
-    Route::put('/profile', [ProfileController::class, 'update'])
-        ->name('profile.update');
+
+    Route::put('/profile', [
+        ProfileController::class,
+        'update'
+    ])->name('profile.update');
+
 
 
     /*
@@ -211,7 +401,9 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/settings', [SettingsController::class, 'index'])
-        ->name('settings');
+    Route::get('/settings', [
+        SettingsController::class,
+        'index'
+    ])->name('settings');
 
 });

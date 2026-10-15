@@ -145,14 +145,14 @@
                 <button id="profileButton" class="profile">
 
                     <img
-                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=85"
-                        alt="Asma Arif"
-                    >
+    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=85"
+    alt="{{ $user->name }}"
+>
 
-                    <span>
-                        <b>Asma Arif</b>
-                        <small>Admin</small>
-                    </span>
+<span>
+    <b>{{ $user->name }}</b>
+    <small>{{ ucfirst($user->role) }}</small>
+</span>
 
                     <i class="fa-solid fa-chevron-down"></i>
 
@@ -208,7 +208,7 @@
 
                 <div>
 
-                    <h1>Good Morning, Asma! 👋</h1>
+                    <h1>Good Morning, {{ $user->name }}! 👋</h1>
 
                     <p>
                         Here's what's happening at your campus today.

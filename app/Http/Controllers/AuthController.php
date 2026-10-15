@@ -29,6 +29,34 @@ class AuthController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | Student Login Page
+    |--------------------------------------------------------------------------
+    */
+
+    public function studentLogin()
+    {
+        return redirect()->route('login', [
+            'type' => 'student'
+        ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Login Page
+    |--------------------------------------------------------------------------
+    */
+
+    public function adminLogin()
+    {
+        return redirect()->route('login', [
+            'type' => 'admin'
+        ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Login
     |--------------------------------------------------------------------------
     */
@@ -55,41 +83,135 @@ class AuthController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Check Login
+        | Find User
         |--------------------------------------------------------------------------
         */
 
-        if (Auth::attempt(
-            [
-                'email' => $credentials['email'],
-                'password' => $credentials['password'],
-            ],
-            $request->boolean('remember')
-        )) {
+        $user = User::where('email', $credentials['email'])->first();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check Email / Password
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+
+            return back()
+                ->withInput($request->only('email'))
+                ->with('loginType', $loginType)
+                ->withErrors([
+                    'email' => 'The email or password is incorrect.',
+                ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN LOGIN
+        |--------------------------------------------------------------------------
+        |
+        | Only these four authorized people can enter the
+        | Admin Dashboard.
+        |
+        */
+
+        if ($loginType === 'admin') {
+
+            $adminNames = [
+                'Mohid',
+                'Laiba',
+                'Asma',
+                'Bushra',
+                'waleed',
+            ];
+
+            $isAuthorizedAdmin = false;
+
+            foreach ($adminNames as $adminName) {
+
+                if (
+                    strcasecmp(
+                        trim($user->name),
+                        trim($adminName)
+                    ) === 0
+                    ||
+                    stripos(
+                        trim($user->name),
+                        trim($adminName)
+                    ) !== false
+                ) {
+                    $isAuthorizedAdmin = true;
+                    break;
+                }
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Admin Not Authorized
+            |--------------------------------------------------------------------------
+            */
+
+            if (!$isAuthorizedAdmin) {
+
+                return back()
+                    ->withInput($request->only('email'))
+                    ->with('loginType', 'admin')
+                    ->withErrors([
+                        'email' =>
+                            'Admin access denied. This account is not authorized for the CampusGuard Admin Panel.',
+                    ]);
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Login Authorized Admin
+            |--------------------------------------------------------------------------
+            */
+
+            Auth::login($user, $request->boolean('remember'));
 
             $request->session()->regenerate();
 
+            $request->session()->put('user_role', 'admin');
+
             return redirect()
-                ->intended(route('dashboard'))
+                ->route('dashboard')
                 ->with(
                     'success',
-                    'Welcome back! You are successfully logged in.'
+                    'Welcome to the CampusGuard Admin Dashboard.'
                 );
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | Login Failed
+        | STUDENT LOGIN
         |--------------------------------------------------------------------------
         */
 
-        return back()
-            ->withInput($request->only('email'))
-            ->with('loginType', $loginType)
-            ->withErrors([
-                'email' => 'The email or password is incorrect.',
-            ]);
+        Auth::login($user, $request->boolean('remember'));
+
+        $request->session()->regenerate();
+
+        $request->session()->put('user_role', 'student');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Student goes directly to Report Incident
+        |--------------------------------------------------------------------------
+        */
+
+        return redirect()
+            ->route('emergency-reports.create')
+            ->with(
+                'success',
+                'Welcome to CampusGuard. You can now report an emergency incident.'
+            );
     }
 
 
@@ -137,6 +259,12 @@ class AuthController extends Controller
         ]);
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Every newly registered account is a Student
+        |--------------------------------------------------------------------------
+        */
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -148,12 +276,20 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        $request->session()->put('user_role', 'student');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | New Student goes to Report Incident
+        |--------------------------------------------------------------------------
+        */
 
         return redirect()
-            ->route('dashboard')
+            ->route('emergency-reports.create')
             ->with(
                 'success',
-                'Account created successfully. Welcome to CampusGuard!'
+                'Account created successfully. You can now report an emergency incident.'
             );
     }
 
@@ -171,7 +307,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
-
 
         return redirect()
             ->route('home')

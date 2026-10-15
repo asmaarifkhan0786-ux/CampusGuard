@@ -11,6 +11,9 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // Currently logged-in admin
+        $user = auth()->user();
+
         // Total emergency reports
         $totalReports = EmergencyReport::count();
 
@@ -49,9 +52,6 @@ class DashboardController extends Controller
         )->count();
 
         // Active emergency alerts
-        // Use get(), not count(), because the Blade view
-        // loops through alerts and displays their titles.
-
         $activeAlerts = EmergencyAlert::where(
             'is_active',
             true
@@ -87,6 +87,7 @@ class DashboardController extends Controller
 
         // Return dashboard with all required data
         return view('dashboard', compact(
+            'user',
             'totalReports',
             'pendingReports',
             'activeReports',

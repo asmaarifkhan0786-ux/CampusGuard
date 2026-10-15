@@ -20,6 +20,7 @@
         body {
             font-family: Arial, Helvetica, sans-serif;
             min-height: 100vh;
+
             background:
                 linear-gradient(
                     90deg,
@@ -328,8 +329,6 @@
             transform: translateY(-1px);
         }
 
-        /* CREATE ACCOUNT - ADDED */
-
         .create-account {
             text-align: center;
             margin-top: 20px;
@@ -411,6 +410,7 @@
         }
 
         @media(max-width: 950px) {
+
             body {
                 padding: 15px;
             }
@@ -433,6 +433,7 @@
         }
 
         @media(max-width: 550px) {
+
             .features {
                 grid-template-columns: 1fr;
             }
@@ -487,6 +488,7 @@
 
             <div class="feature">
                 <div class="feature-icon">🛡️</div>
+
                 <div>
                     <h3>Quick Response</h3>
                     <p>Immediate action for emergencies</p>
@@ -495,6 +497,7 @@
 
             <div class="feature">
                 <div class="feature-icon">👥</div>
+
                 <div>
                     <h3>Better Coordination</h3>
                     <p>Connects teams &amp; resources</p>
@@ -503,6 +506,7 @@
 
             <div class="feature">
                 <div class="feature-icon">📍</div>
+
                 <div>
                     <h3>Safe Campus</h3>
                     <p>Monitors &amp; manages incidents</p>
@@ -511,6 +515,7 @@
 
             <div class="feature">
                 <div class="feature-icon">📊</div>
+
                 <div>
                     <h3>Data Driven</h3>
                     <p>Reports &amp; analytics for improvement</p>
@@ -524,6 +529,7 @@
         </div>
 
     </div>
+
 
     <!-- RIGHT SIDE -->
 
@@ -542,26 +548,49 @@
             </h2>
 
             <p class="subtitle">
+
                 @if($loginType === 'student')
+
                     Student access portal.
+
                 @else
-                    Access your dashboard and manage campus safety.
+
+                    Authorized administrator access portal.
+
                 @endif
+
             </p>
 
+
+            <!-- SUCCESS MESSAGE -->
+
             @if(session('success'))
+
                 <div class="success">
                     {{ session('success') }}
                 </div>
+
             @endif
 
+
+            <!-- ERROR MESSAGE -->
+
             @if($errors->any())
+
                 <div class="error">
+
                     @foreach($errors->all() as $error)
+
                         <div>{{ $error }}</div>
+
                     @endforeach
+
                 </div>
+
             @endif
+
+
+            <!-- LOGIN FORM -->
 
             <form action="{{ route('login.submit') }}" method="POST">
 
@@ -573,11 +602,17 @@
                     value="{{ $loginType }}"
                 >
 
+
+                <!-- EMAIL -->
+
                 <div class="form-group">
 
-                    <label>Username or Email</label>
+                    <label>
+                        Email Address
+                    </label>
 
                     <div class="input-wrapper">
+
                         <span>👤</span>
 
                         <input
@@ -588,15 +623,22 @@
                             required
                             autofocus
                         >
+
                     </div>
 
                 </div>
 
+
+                <!-- PASSWORD -->
+
                 <div class="form-group">
 
-                    <label>Password</label>
+                    <label>
+                        Password
+                    </label>
 
                     <div class="input-wrapper">
+
                         <span>🔒</span>
 
                         <input
@@ -610,20 +652,29 @@
                         <span
                             class="password-toggle"
                             onclick="togglePassword()"
-                        >👁</span>
+                        >
+                            👁
+                        </span>
+
                     </div>
 
                 </div>
 
+
+                <!-- OPTIONS -->
+
                 <div class="login-options">
 
                     <label class="remember">
+
                         <input
                             type="checkbox"
                             name="remember"
                             value="1"
                         >
+
                         Remember Me
+
                     </label>
 
                     <a
@@ -635,32 +686,56 @@
 
                 </div>
 
-                <button type="submit" class="login-btn">
+
+                <!-- LOGIN BUTTON -->
+
+                <button
+                    type="submit"
+                    class="login-btn"
+                >
+
                     ➜ &nbsp;
+
                     @if($loginType === 'student')
+
                         Student Login
+
                     @else
+
                         Admin Login
+
                     @endif
+
                 </button>
 
             </form>
 
-            <!-- CREATE ACCOUNT - ADDED -->
+
+            <!-- CREATE STUDENT ACCOUNT -->
 
             @if($loginType === 'student')
+
                 <div class="create-account">
-                    <span>Don't have an account?</span>
+
+                    <span>
+                        Don't have an account?
+                    </span>
 
                     <a href="{{ route('register') }}">
                         Create Account
                     </a>
+
                 </div>
+
             @endif
+
+
+            <!-- SWITCH LOGIN -->
 
             <div class="or">
                 OR
             </div>
+
 
             <div class="role-buttons">
 
@@ -680,14 +755,20 @@
 
             </div>
 
+
             <div class="security">
-                🔒 Secure Access | Authorized Personnel Only
+
+                🔒 Secure Access | CampusGuard
+
             </div>
 
+
             <div class="back-home">
+
                 <a href="{{ route('home') }}">
                     ← Back to CampusGuard Home
                 </a>
+
             </div>
 
         </div>
@@ -696,16 +777,24 @@
 
 </div>
 
+
 <script>
-function togglePassword() {
+
+function togglePassword()
+{
     const password = document.getElementById('password');
 
     if (password.type === 'password') {
+
         password.type = 'text';
+
     } else {
+
         password.type = 'password';
+
     }
 }
+
 </script>
 
 </body>
